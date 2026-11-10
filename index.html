@@ -35,7 +35,7 @@
             display: flex;
             flex-direction: column;
             height: 92vh;
-            max-height: 820px;
+            max-height: 850px;
         }
 
         header {
@@ -242,12 +242,38 @@
         /* Final Screen Styles */
         .final-center {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .trophy-icon {
-            font-size: 3rem;
-            margin-bottom: 5px;
+            font-size: 2.5rem;
+            margin-bottom: 2px;
+        }
+
+        .final-player-card {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .final-player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: var(--primary-color);
+        }
+
+        .hit-details {
+            font-size: 0.85rem;
+            color: #555;
+            background: var(--primary-light);
+            padding: 6px 8px;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -313,10 +339,10 @@
             <div class="trophy-icon">🏆</div>
             <h2>Game Over!</h2>
         </div>
-        <div class="scoreboard-card" id="final-scoreboard-list" style="flex: 1;">
+        <div id="final-scoreboard-list" style="flex: 1; overflow-y: auto;">
             <!-- Populated dynamically via JS -->
         </div>
-        <button class="btn" onclick="resetGame()" style="margin-top: 15px;">Play Again</button>
+        <button class="btn" onclick="resetGame()" style="margin-top: 10px;">Play Again</button>
     </div>
 </div>
 
@@ -324,9 +350,9 @@
     let players = [];
     let currentTarget = 1;
     let currentPlayerIndex = 0;
-    let currentDartDumps = []; // Holds multipliers of up to 3 darts for the active turn
-    let currentDartNames = []; // Holds labels for display
-    let actionHistory = [];    // For undo support
+    let currentDartDumps = []; 
+    let currentDartNames = []; 
+    let actionHistory = [];    
 
     function addPlayerField() {
         const container = document.getElementById('player-inputs');
@@ -353,7 +379,8 @@
         
         inputs.forEach((input, index) => {
             const name = input.value.trim() || `Player ${index + 1}`;
-            players.push({ name: name, score: 0 });
+            // Store roundHits as an object mapping target number (1-20) to an array of dart labels thrown
+            players.push({ name: name, score: 0, roundHits: {} });
         });
 
         currentTarget = 1;
@@ -372,12 +399,10 @@
         document.getElementById('active-player-name').innerText = players[currentPlayerIndex].name;
         document.getElementById('target-label').innerText = `Target Number: ${currentTarget}`;
 
-        // Update button multipliers based on target
         document.getElementById('btn-double').innerHTML = `Double<br><small>(${currentTarget * 2} pts)</small>`;
         document.getElementById('btn-triple').innerHTML = `Triple<br><small>(${currentTarget * 3} pts)</small>`;
         document.getElementById('btn-quad').innerHTML = `Quad<br><small>(${currentTarget * 4} pts)</small>`;
 
-        // Render the 3 Dart Slots
         for (let i = 1; i <= 3; i++) {
             const slot = document.getElementById(`dart-${i}`);
             if (currentDartNames[i - 1]) {
@@ -389,11 +414,9 @@
             }
         }
 
-        // Enable submit button once at least 1 dart has been logged (or allow full 3)
         document.getElementById('btn-submit').disabled = currentDartDumps.length === 0;
         document.getElementById('btn-undo').disabled = actionHistory.length === 0;
 
-        // Render live scoreboard list
         const scoreList = document.getElementById('scoreboard-list');
         scoreList.innerHTML = '';
         players.forEach((p, index) => {
@@ -417,14 +440,20 @@
     }
 
     function submitTurn() {
-        // Save state snapshot for undo support
+        // Save state snapshot for undo support (deep copy players and roundHits)
         actionHistory.push({
-            players: players.map(p => ({ ...p })),
+            players: players.map(p => ({ 
+                name: p.name, 
+                score: p.score, 
+                roundHits: JSON.parse(JSON.stringify(p.roundHits)) 
+            })),
             currentTarget: currentTarget,
             currentPlayerIndex: currentPlayerIndex
         });
 
-        // Calculate total points earned from the 3 thrown darts
+        // Save hits for this target round
+        players[currentPlayerIndex].roundHits[currentTarget] = [...currentDartNames];
+
         let turnPoints = 0;
         currentDartDumps.forEach(mult => {
             turnPoints += currentTarget * mult;
@@ -432,11 +461,9 @@
 
         players[currentPlayerIndex].score += turnPoints;
 
-        // Reset dart tracking for next turn
         currentDartDumps = [];
         currentDartNames = [];
 
-        // Advance turn / round logic
         if (currentPlayerIndex < players.length - 1) {
             currentPlayerIndex++;
         } else {
@@ -473,14 +500,31 @@
 
         const finalScoreList = document.getElementById('final-scoreboard-list');
         finalScoreList.innerHTML = '';
+        
         sortedPlayers.forEach((p, index) => {
-            const div = document.createElement('div');
-            div.className = 'score-item';
-            div.innerHTML = `
-                <span><strong>#${index + 1}</strong> ${p.name}</span>
-                <strong style="color: var(--primary-color);">${p.score} pts</strong>
+            // Build summary string of hits across targets
+            let hitsSummary = [];
+            for (let t = 1; t <= 20; t++) {
+                if (p.roundHits[t]) {
+                    let nonMisses = p.roundHits[t].filter(d => d !== 'Miss');
+                    if (nonMisses.length > 0) {
+                        hitsSummary.push(`Target ${t}: ${nonMisses.join(', ')}`);
+                    }
+                }
+            }
+
+            const hitDetailsText = hitsSummary.length > 0 ? hitsSummary.join(' | ') : 'No scoring hits recorded';
+
+            const card = document.createElement('div');
+            card.className = 'final-player-card';
+            card.innerHTML = `
+                <div class="final-player-header">
+                    <span>#${index + 1} ${p.name}</span>
+                    <span style="color: var(--primary-color);">${p.score} pts</span>
+                </div>
+                <div class="hit-details"><strong>Hits:</strong> ${hitDetailsText}</div>
             `;
-            finalScoreList.appendChild(div);
+            finalScoreList.appendChild(card);
         });
     }
 
