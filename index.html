@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queen's Quads - Dart Game</title>
+    <style>
+        :root {
+            --primary-color: #512da8;
+            --primary-light: #ede7f6;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 750px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .screen {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.4rem;
+            text-align: center;
+        }
+
+        /* Setup Screen Styles */
+        #player-inputs {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .player-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .player-row input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: #78909c;
+            margin-bottom: 10px;
+        }
+
+        .btn-danger {
+            background-color: #e53935;
+            padding: 8px 12px;
+        }
+
+        /* Game Screen Styles */
+        .turn-banner {
+            background-color: var(--primary-light);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .turn-banner .player-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 4px 0;
+        }
+
+        .scoreboard-card {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background: white;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .score-item.active {
+            background-color: var(--primary-light);
+            font-weight: bold;
+        }
+
+        .action-pad {
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .action-pad p {
+            margin: 0 0 10px 0;
+            font-weight: bold;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .btn-miss { background-color: #7f8c8d; }
+        .btn-double { background-color: #2980b9; }
+        .btn-triple { background-color: #d35400; }
+        .btn-quad { background-color: #27ae60; }
+
+        .btn-action {
+            padding: 12px;
+            font-size: 0.95rem;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Final Screen Styles */
+        .final-center {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .trophy-icon {
+            font-size: 3rem;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header id="app-header">Queen's Quads</header>
+
+    <!-- 1. SETUP SCREEN -->
+    <div id="setup-screen" class="screen">
+        <h2>Enter Players</h2>
+        <div id="player-inputs">
+            <div class="player-row">
+                <input type="text" value="Player 1" placeholder="Player Name">
+                <button class="btn btn-danger" onclick="removePlayer(this)">✕</button>
+            </div>
+            <div class="player-row">
+                <input type="text" value="Player 2" placeholder="Player Name">
+                <button class="btn btn-danger" onclick="removePlayer(this)">✕</button>
+            </div>
+        </div>
+        <button class="btn btn-secondary" onclick="addPlayerField()">+ Add Player</button>
+        <button class="btn" onclick="startGame()" style="margin-top: 10px;">Start Game</button>
+    </div>
+
+    <!-- 2. GAME SCREEN -->
+    <div id="game-screen" class="screen hidden">
+        <div class="turn-banner">
+            <span style="font-size: 0.85rem; color: #666;">CURRENT TURN</span>
+            <div class="player-name" id="active-player-name">Player 1</div>
+            <div style="font-size: 0.9rem; font-weight: 500;" id="target-label">Target: 1</div>
+        </div>
+
+        <div class="scoreboard-card" id="scoreboard-list">
+            <!-- Populated dynamically via JS -->
+        </div>
+
+        <div class="action-pad">
+            <p>Select Dart Result:</p>
+            <div class="btn-grid">
+                <button class="btn-action btn-miss" onclick="recordHit(0)">Miss / Single<br><small>(0 pts)</small></button>
+                <button class="btn-action btn-double" id="btn-double" onclick="recordHit(2)">Double<br><small>(2 pts)</small></button>
+                <button class="btn-action btn-triple" id="btn-triple" onclick="recordHit(3)">Triple<br><small>(3 pts)</small></button>
+                <button class="btn-action btn-quad" id="btn-quad" onclick="recordHit(4)">Quad<br><small>(4 pts)</small></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. FINAL SCOREBOARD SCREEN -->
+    <div id="final-screen" class="screen hidden">
+        <div class="final-center">
+            <div class="trophy-icon">🏆</div>
+            <h2>Game Over!</h2>
+        </div>
+        <div class="scoreboard-card" id="final-scoreboard-list" style="flex: 1;">
+            <!-- Populated dynamically via JS -->
+        </div>
+        <button class="btn" onclick="resetGame()" style="margin-top: 15px;">Play Again</button>
+    </div>
+</div>
+
+<script>
+    let players = [];
+    let currentTarget = 1;
+    let currentPlayerIndex = 0;
+
+    function addPlayerField() {
+        const container = document.getElementById('player-inputs');
+        const count = container.children.length + 1;
+        const div = document.createElement('div');
+        div.className = 'player-row';
+        div.innerHTML = `
+            <input type="text" value="Player ${count}" placeholder="Player Name">
+            <button class="btn btn-danger" onclick="removePlayer(this)">✕</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function removePlayer(button) {
+        const container = document.getElementById('player-inputs');
+        if (container.children.length > 1) {
+            button.parentElement.remove();
+        }
+    }
+
+    function startGame() {
+        const inputs = document.querySelectorAll('#player-inputs input');
+        players = [];
+        
+        inputs.forEach((input, index) => {
+            const name = input.value.trim() || `Player ${index + 1}`;
+            players.push({ name: name, score: 0 });
+        });
+
+        currentTarget = 1;
+        currentPlayerIndex = 0;
+
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        updateGameUI();
+    }
+
+    function updateGameUI() {
+        document.getElementById('app-header').innerText = `Target: ${currentTarget} (Round ${currentTarget}/20)`;
+        document.getElementById('active-player-name').innerText = players[currentPlayerIndex].name;
+        document.getElementById('target-label').innerText = `Target Number: ${currentTarget}`;
+
+        // Update button sub-labels with accurate points based on current target
+        document.getElementById('btn-double').innerHTML = `Double<br><small>(${currentTarget * 2} pts)</small>`;
+        document.getElementById('btn-triple').innerHTML = `Triple<br><small>(${currentTarget * 3} pts)</small>`;
+        document.getElementById('btn-quad').innerHTML = `Quad<br><small>(${currentTarget * 4} pts)</small>`;
+
+        // Render scoreboard
+        const scoreList = document.getElementById('scoreboard-list');
+        scoreList.innerHTML = '';
+        players.forEach((p, index) => {
+            const isCurrent = index === currentPlayerIndex;
+            const div = document.createElement('div');
+            div.className = `score-item ${isCurrent ? 'active' : ''}`;
+            div.innerHTML = `
+                <span>${index + 1}. ${p.name}</span>
+                <strong>${p.score} pts</strong>
+            `;
+            scoreList.appendChild(div);
+        });
+    }
+
+    function recordHit(multiplier) {
+        // multiplier: 0 = Miss/Single, 2 = Double, 3 = Triple, 4 = Quad
+        const pointsEarned = currentTarget * multiplier;
+        players[currentPlayerIndex].score += pointsEarned;
+
+        // Turn management logic
+        if (currentPlayerIndex < players.length - 1) {
+            currentPlayerIndex++;
+        } else {
+            currentPlayerIndex = 0;
+            if (currentTarget < 20) {
+                currentTarget++;
+            } else {
+                showFinalScreen();
+                return;
+            }
+        }
+        updateGameUI();
+    }
+
+    function showFinalScreen() {
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('final-screen').classList.remove('hidden');
+        document.getElementById('app-header').innerText = "Queen's Quads - Results";
+
+        // Sort players by score descending
+        const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
+        const finalScoreList = document.getElementById('final-scoreboard-list');
+        finalScoreList.innerHTML = '';
+        sortedPlayers.forEach((p, index) => {
+            const div = document.createElement('div');
+            div.className = 'score-item';
+            div.innerHTML = `
+                <span><strong>#${index + 1}</strong> ${p.name}</span>
+                <strong style="color: var(--primary-color);">${p.score} pts</strong>
+            `;
+            finalScoreList.appendChild(div);
+        });
+    }
+
+    function resetGame() {
+        document.getElementById('final-screen').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+        document.getElementById('app-header').innerText = "Queen's Quads";
+    }
+</script>
+
+</body>
+</html>
