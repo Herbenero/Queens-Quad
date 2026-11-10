@@ -34,8 +34,8 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 90vh;
-            max-height: 750px;
+            height: 92vh;
+            max-height: 820px;
         }
 
         header {
@@ -105,6 +105,12 @@
             opacity: 0.9;
         }
 
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
         .btn-secondary {
             background-color: #78909c;
             margin-bottom: 10px;
@@ -118,17 +124,43 @@
         /* Game Screen Styles */
         .turn-banner {
             background-color: var(--primary-light);
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .turn-banner .player-name {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
             color: var(--primary-color);
-            margin: 4px 0;
+            margin: 2px 0;
+        }
+
+        /* Darts Tracker Display */
+        .darts-display {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .dart-slot {
+            flex: 1;
+            background: #ffffff;
+            border: 2px dashed #b39ddb;
+            border-radius: 6px;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .dart-slot.filled {
+            border: 2px solid var(--primary-color);
+            background-color: var(--primary-light);
+            font-weight: bold;
+            color: var(--primary-color);
         }
 
         .scoreboard-card {
@@ -136,7 +168,7 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             overflow-y: auto;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             background: white;
         }
 
@@ -144,7 +176,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
+            padding: 8px 15px;
             border-bottom: 1px solid #f0f0f0;
         }
 
@@ -155,20 +187,22 @@
 
         .action-pad {
             background: #f1f3f5;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             text-align: center;
         }
 
         .action-pad p {
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             font-weight: bold;
+            font-size: 0.95rem;
         }
 
         .btn-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 6px;
+            margin-bottom: 8px;
         }
 
         .btn-miss { background-color: #7f8c8d; }
@@ -177,13 +211,32 @@
         .btn-quad { background-color: #27ae60; }
 
         .btn-action {
-            padding: 12px;
-            font-size: 0.95rem;
+            padding: 10px;
+            font-size: 0.9rem;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+        }
+
+        .turn-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-submit {
+            background-color: #27ae60;
+            flex: 2;
+            padding: 10px;
+            font-size: 0.95rem;
+        }
+
+        .btn-undo {
+            background-color: #e67e22;
+            flex: 1;
+            padding: 10px;
+            font-size: 0.95rem;
         }
 
         /* Final Screen Styles */
@@ -223,9 +276,16 @@
     <!-- 2. GAME SCREEN -->
     <div id="game-screen" class="screen hidden">
         <div class="turn-banner">
-            <span style="font-size: 0.85rem; color: #666;">CURRENT TURN</span>
+            <span style="font-size: 0.8rem; color: #666;">CURRENT TURN</span>
             <div class="player-name" id="active-player-name">Player 1</div>
-            <div style="font-size: 0.9rem; font-weight: 500;" id="target-label">Target: 1</div>
+            <div style="font-size: 0.85rem; font-weight: 500;" id="target-label">Target: 1</div>
+        </div>
+
+        <!-- 3 Darts Display Tracker -->
+        <div class="darts-display">
+            <div class="dart-slot" id="dart-1">Dart 1: -</div>
+            <div class="dart-slot" id="dart-2">Dart 2: -</div>
+            <div class="dart-slot" id="dart-3">Dart 3: -</div>
         </div>
 
         <div class="scoreboard-card" id="scoreboard-list">
@@ -233,12 +293,16 @@
         </div>
 
         <div class="action-pad">
-            <p>Select Dart Result:</p>
+            <p>Throw Dart Result:</p>
             <div class="btn-grid">
-                <button class="btn-action btn-miss" onclick="recordHit(0)">Miss / Single<br><small>(0 pts)</small></button>
-                <button class="btn-action btn-double" id="btn-double" onclick="recordHit(2)">Double<br><small>(2 pts)</small></button>
-                <button class="btn-action btn-triple" id="btn-triple" onclick="recordHit(3)">Triple<br><small>(3 pts)</small></button>
-                <button class="btn-action btn-quad" id="btn-quad" onclick="recordHit(4)">Quad<br><small>(4 pts)</small></button>
+                <button class="btn-action btn-miss" onclick="recordDart(0, 'Miss')">Miss / Single<br><small>(0 pts)</small></button>
+                <button class="btn-action btn-double" id="btn-double" onclick="recordDart(2, 'Double')">Double<br><small>(2 pts)</small></button>
+                <button class="btn-action btn-triple" id="btn-triple" onclick="recordDart(3, 'Triple')">Triple<br><small>(3 pts)</small></button>
+                <button class="btn-action btn-quad" id="btn-quad" onclick="recordDart(4, 'Quad')">Quad<br><small>(4 pts)</small></button>
+            </div>
+            <div class="turn-controls">
+                <button class="btn btn-action btn-submit" id="btn-submit" onclick="submitTurn()" disabled>Submit Turn</button>
+                <button class="btn btn-action btn-undo" id="btn-undo" onclick="undoLastAction()" disabled>Undo</button>
             </div>
         </div>
     </div>
@@ -260,6 +324,9 @@
     let players = [];
     let currentTarget = 1;
     let currentPlayerIndex = 0;
+    let currentDartDumps = []; // Holds multipliers of up to 3 darts for the active turn
+    let currentDartNames = []; // Holds labels for display
+    let actionHistory = [];    // For undo support
 
     function addPlayerField() {
         const container = document.getElementById('player-inputs');
@@ -291,6 +358,9 @@
 
         currentTarget = 1;
         currentPlayerIndex = 0;
+        currentDartDumps = [];
+        currentDartNames = [];
+        actionHistory = [];
 
         document.getElementById('setup-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
@@ -302,12 +372,28 @@
         document.getElementById('active-player-name').innerText = players[currentPlayerIndex].name;
         document.getElementById('target-label').innerText = `Target Number: ${currentTarget}`;
 
-        // Update button sub-labels with accurate points based on current target
+        // Update button multipliers based on target
         document.getElementById('btn-double').innerHTML = `Double<br><small>(${currentTarget * 2} pts)</small>`;
         document.getElementById('btn-triple').innerHTML = `Triple<br><small>(${currentTarget * 3} pts)</small>`;
         document.getElementById('btn-quad').innerHTML = `Quad<br><small>(${currentTarget * 4} pts)</small>`;
 
-        // Render scoreboard
+        // Render the 3 Dart Slots
+        for (let i = 1; i <= 3; i++) {
+            const slot = document.getElementById(`dart-${i}`);
+            if (currentDartNames[i - 1]) {
+                slot.innerText = `Dart ${i}: ${currentDartNames[i - 1]}`;
+                slot.classList.add('filled');
+            } else {
+                slot.innerText = `Dart ${i}: -`;
+                slot.classList.remove('filled');
+            }
+        }
+
+        // Enable submit button once at least 1 dart has been logged (or allow full 3)
+        document.getElementById('btn-submit').disabled = currentDartDumps.length === 0;
+        document.getElementById('btn-undo').disabled = actionHistory.length === 0;
+
+        // Render live scoreboard list
         const scoreList = document.getElementById('scoreboard-list');
         scoreList.innerHTML = '';
         players.forEach((p, index) => {
@@ -322,12 +408,35 @@
         });
     }
 
-    function recordHit(multiplier) {
-        // multiplier: 0 = Miss/Single, 2 = Double, 3 = Triple, 4 = Quad
-        const pointsEarned = currentTarget * multiplier;
-        players[currentPlayerIndex].score += pointsEarned;
+    function recordDart(multiplier, label) {
+        if (currentDartDumps.length < 3) {
+            currentDartDumps.push(multiplier);
+            currentDartNames.push(label);
+            updateGameUI();
+        }
+    }
 
-        // Turn management logic
+    function submitTurn() {
+        // Save state snapshot for undo support
+        actionHistory.push({
+            players: players.map(p => ({ ...p })),
+            currentTarget: currentTarget,
+            currentPlayerIndex: currentPlayerIndex
+        });
+
+        // Calculate total points earned from the 3 thrown darts
+        let turnPoints = 0;
+        currentDartDumps.forEach(mult => {
+            turnPoints += currentTarget * mult;
+        });
+
+        players[currentPlayerIndex].score += turnPoints;
+
+        // Reset dart tracking for next turn
+        currentDartDumps = [];
+        currentDartNames = [];
+
+        // Advance turn / round logic
         if (currentPlayerIndex < players.length - 1) {
             currentPlayerIndex++;
         } else {
@@ -342,12 +451,24 @@
         updateGameUI();
     }
 
+    function undoLastAction() {
+        if (actionHistory.length === 0) return;
+
+        const prevState = actionHistory.pop();
+        players = prevState.players;
+        currentTarget = prevState.currentTarget;
+        currentPlayerIndex = prevState.currentPlayerIndex;
+        currentDartDumps = [];
+        currentDartNames = [];
+
+        updateGameUI();
+    }
+
     function showFinalScreen() {
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('final-screen').classList.remove('hidden');
         document.getElementById('app-header').innerText = "Queen's Quads - Results";
 
-        // Sort players by score descending
         const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
         const finalScoreList = document.getElementById('final-scoreboard-list');
